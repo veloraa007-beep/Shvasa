@@ -1,0 +1,181 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                    String    @id @default(uuid())
+  email                 String    @unique
+  name                  String?
+  avatar_url            String?
+  google_id             String?   @unique
+  theme                 String    @default("sunflower")
+  role                  String    @default("solo_founder")
+  plan                  String    @default("seed")  // seed | bloom | orchard
+  morning_brief_time    String    @default("07:00")
+  notification_prefs    Json      @default("{}")
+  voice_profile         Json?
+  workspace_id          String?
+  created_at            DateTime  @default(now())
+  tasks                 Task[]
+  patterns              UserPattern?
+}
+
+model Task {
+  id                String      @id @default(uuid())
+  user_id           String
+  workspace_id      String?
+  title             String
+  deadline          DateTime?
+  priority          Priority    @default(MEDIUM)
+  status            TaskStatus  @default(SEED)     // SEED | PLANT | TREE
+  urgency_score     Float       @default(0.5)
+  complexity_score  Float?
+  estimated_minutes Int?
+  raw_transcript    String?     // NEVER DELETE — immutable
+  ai_confidence     Float?
+  visibility        Visibility  @default(PERSONAL)
+  assigned_to       String?
+  notes             String?
+  garden_position   Json?       // {x, y} for garden view layout
+  created_at        DateTime    @default(now())
+  updated_at        DateTime    @updatedAt
+  user              User        @relation(fields: [user_id], references: [id])
+  subtasks          Subtask[]
+  reminders         Reminder[]
+  events            TaskEvent[]
+  comments          TaskComment[]
+}
+
+model Subtask {
+  id         String   @id @default(uuid())
+  task_id    String
+  text       String
+  done       Boolean  @default(false)
+  order      Int
+  depends_on String[] // array of subtask IDs
+  task       Task     @relation(fields: [task_id], references: [id])
+}
+
+model Reminder {
+  id             String        @id @default(uuid())
+  task_id        String
+  fire_at        DateTime
+  channel        Channel       @default(PUSH)  // PUSH | EMAIL | SLACK | WHATSAPP
+  integration_id String?
+  sent           Boolean       @default(false)
+  task           Task          @relation(fields: [task_id], references: [id])
+}
+
+model TaskEvent {
+  id         String   @id @default(uuid())
+  task_id    String
+  user_id    String
+  event_type String   // created | status_changed | reassigned | snoozed | completed
+  metadata   Json
+  created_at DateTime @default(now())
+  task       Task     @relation(fields: [task_id], references: [id])
+  // APPEND-ONLY. Never UPDATE or DELETE rows in this table.
+}
+
+model AIParseLog {
+  id            String   @id @default(uuid())
+  task_id       String?
+  raw_input     String
+  parsed_output Json
+  model         String
+  confidence    Float
+  ms_latency    Int
+  created_at    DateTime @default(now())
+}
+
+model Workspace {
+  id         String            @id @default(uuid())
+  name       String
+  plan       String            @default("seed")
+  owner_id   String
+  created_at DateTime          @default(now())
+  members    WorkspaceMember[]
+}
+
+model WorkspaceMember {
+  workspace_id String
+  user_id      String
+  role         WorkspaceRole @default(MEMBER)
+  joined_at    DateTime      @default(now())
+  workspace    Workspace     @relation(fields: [workspace_id], references: [id])
+
+  @@id([workspace_id, user_id])
+}
+
+model TaskComment {
+  id          String   @id @default(uuid())
+  task_id     String
+  user_id     String
+  body        String?
+  voice_url   String?
+  parent_id   String?
+  created_at  DateTime @default(now())
+  task        Task     @relation(fields: [task_id], references: [id])
+  mentions    CommentMention[]
+}
+
+model DeviceToken {
+  id        String   @id @default(uuid())
+  user_id   String
+  token     String   @unique
+  created_at DateTime @default(now())
+  user      User     @relation(fields: [user_id], references: [id])
+
+  @@unique([user_id, token])
+  @@map("device_tokens")
+}
+
+model CommentMention {
+  comment_id        String
+  mentioned_user_id String
+  comment           TaskComment @relation(fields: [comment_id], references: [id])
+
+  @@id([comment_id, mentioned_user_id])
+}
+
+model Integration {
+  id               String   @id @default(uuid())
+  user_id          String
+  provider         String   // google_calendar | gmail | slack | whatsapp | notion | linear
+  credentials_enc  String   // AES-256 encrypted
+  scopes           String[]
+  active           Boolean  @default(true)
+  last_synced      DateTime?
+  created_at       DateTime @default(now())
+}
+
+model UserPattern {
+  user_id                  String   @id
+  completion_by_hour       Json     // { "09": 0.8, "14": 0.6, ... }
+  task_type_performance    Json
+  snooze_tendency_score    Float    @default(0.5)
+  best_focus_window_start  String?
+  best_focus_window_end    String?
+  computed_at              DateTime @default(now())
+  user                     User     @relation(fields: [user_id], references: [id])
+}
+
+model DailySnapshot {
+  id           String   @id @default(uuid())
+  user_id      String
+  workspace_id String?
+  date         DateTime @db.Date
+  metrics      Json
+  created_at   DateTime @default(now())
+}
+
+enum Priority     { HIGH MEDIUM LOW }
+enum TaskStatus   { SEED PLANT TREE }
+enum Visibility   { PERSONAL WORKSPACE }
+enum WorkspaceRole { OWNER ADMIN MEMBER VIEWER }
+enum Channel      { PUSH EMAIL SLACK WHATSAPP }

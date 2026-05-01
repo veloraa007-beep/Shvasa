@@ -1,0 +1,517 @@
+Prompt
+
+You are a senior software architect, AI engineer, UX designer, and startup product strategist.
+
+Design a modern AI productivity platform called Taskly.
+
+Taskly is a nature-inspired AI task management system that helps people capture tasks quickly and complete them efficiently.
+
+The product should combine:
+
+AI automation
+
+voice input
+
+beautiful UX
+
+calming nature design
+
+The goal is to create a world-class productivity product capable of scaling to millions of users.
+
+🌱 Core Philosophy
+
+Taskly is not a to-do list.
+
+Taskly is a productivity ecosystem.
+
+Concept:
+
+Users manage work like growing a garden.
+
+Example mapping:
+
+Seed → new task
+Plant → in progress
+Tree → completed task
+
+This creates emotional engagement.
+
+🌿 Design Philosophy
+
+Follow biophilic design principles.
+
+The interface should mimic nature.
+
+Design elements:
+
+• organic shapes
+• natural colors
+• smooth animations
+• calm layouts
+
+Nature-based design reduces stress and improves focus.
+
+🎨 Color System
+
+Primary palette:
+
+Forest green
+Leaf green
+Ocean blue
+Sky blue
+
+Accent palette:
+
+Sunrise orange
+Lavender purple
+Sand beige
+
+Backgrounds:
+
+Mist white
+Soft earth tones
+
+Nature palettes help create emotional connection with users.
+
+🧠 Core AI Features
+Voice → Task
+
+User speaks:
+
+“Remind me to finish the presentation tomorrow at 5.”
+
+AI extracts:
+
+task title
+deadline
+priority
+subtasks
+
+Example output:
+
+{
+ "task": "Finish presentation",
+ "deadline": "Tomorrow 5pm",
+ "priority": "High"
+}
+AI Priority Detection
+
+AI determines urgency.
+
+Factors:
+
+deadline
+keywords
+task complexity
+
+Priority levels:
+
+High
+Medium
+Low
+
+AI Smart Reminders
+
+Taskly automatically schedules reminders.
+
+Example:
+
+“Presentation due tomorrow.”
+
+Reminder schedule:
+
+Morning reminder
+2-hour alert
+30-minute alert
+
+AI Risk Engine
+
+Detect missed work.
+
+Example:
+
+⚠️ Task risk alert
+“Your meeting starts in 1 hour and preparation is incomplete.”
+
+Daily AI Brief
+
+Every morning:
+
+“Good morning.
+
+Today you have:
+
+3 important tasks
+1 urgent deadline.”
+
+📱 Screens
+Dashboard
+
+Shows:
+
+Today tasks
+Progress meter
+Priority groups
+
+Task Garden
+
+Visual representation of tasks.
+
+Example:
+
+🌱 New tasks
+🌿 Active tasks
+🌳 Completed tasks
+
+Voice Capture Screen
+
+Large mic button.
+
+Live transcription.
+
+AI structured preview.
+
+Task Detail Screen
+
+Title
+deadline
+subtasks
+notes
+
+Actions:
+
+Complete
+Reschedule
+Edit
+
+🌎 Premium Theme System
+
+Default themes:
+
+Forest theme
+Ocean theme
+Sunrise theme
+Night garden theme
+
+🤖 AI Generated Themes
+
+Pro users can create custom themes.
+
+Example prompt:
+
+“Create a theme inspired by mountains.”
+
+AI generates:
+
+color palette
+icons
+background
+animations
+
+🌳 Focus Mode
+
+Deep work mode.
+
+Features:
+
+Nature sounds
+Minimal UI
+Timer
+
+Examples:
+
+Rain sound
+Forest ambience
+Ocean waves
+
+📊 Analytics
+
+Productivity dashboard.
+
+Metrics:
+
+task completion rate
+focus hours
+weekly progress
+
+💰 Monetization
+Free
+
+Basic tasks
+ads
+limited reminders
+
+Pro
+
+No ads
+AI scheduling
+custom themes
+
+Team
+
+Collaboration
+shared tasks
+team analytics
+
+📈 Viral Growth Features
+
+Invite system:
+
+Invite 5 friends → unlock Pro.
+
+🌐 Integrations
+
+Google Calendar
+WhatsApp reminders
+Slack notifications
+
+🧩 Technology Stack
+
+Frontend:
+
+Next.js
+TailwindCSS
+Framer Motion
+
+Backend:
+
+Node.js
+FastAPI
+
+Database:
+
+PostgreSQL
+
+AI:
+
+Speech-to-text
+LLM parsing
+
+📁 Project Structure
+taskly/
+
+frontend/
+backend/
+ai/
+themes/
+analytics/
+
+docs/
+
+README.md
+BRAND_GUIDELINES.md
+GEMINI.md
+AI_PROMPTS.md
+UI_GUIDE.md
+🎯 Goal
+
+Create a productivity platform that:
+
+• reduces stress
+• improves focus
+• feels beautiful
+• scales globally
+
+🚀 Startup Strategy
+
+Phase 1
+
+Launch MVP.
+
+Phase 2
+
+Add AI scheduling.
+
+Phase 3
+
+Team productivity platform.openapi: 3.0.0
+info:
+  title: Shvasa API
+  version: 1.0.0
+  description: Handshake API contract between Frontend and Backend.
+paths:
+  /tasks:
+    get:
+      summary: Retrieve all tasks for the current user, ordered by urgency score.
+      parameters:
+        - in: header
+          name: x-user-id
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: A list of tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+    post:
+      summary: Parse voice transcript and create a new task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [raw_transcript, user_id]
+              properties:
+                raw_transcript:
+                  type: string
+                  description: The raw text extracted loosely from Whisper.
+                user_id:
+                  type: string
+                  format: uuid
+      responses:
+        '201':
+          description: Task successfully created from transcript.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '202':
+          description: Needs user confirmation due to low AI confidence.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  needs_confirmation:
+                    type: boolean
+                  partial_task:
+                    $ref: '#/components/schemas/AIParseResult'
+        '409':
+          description: Conflict detected within 30m of deadline.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  conflict_detected:
+                    type: boolean
+                  conflicting_task_id:
+                    type: string
+                    format: uuid
+                  suggested_reschedule_time:
+                    type: string
+                    format: date-time
+                  partial_task:
+                    $ref: '#/components/schemas/AIParseResult'
+  /tasks/{id}:
+    get:
+      summary: Get task details including subtasks
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Detailed task view
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+  /parse:
+    post:
+      summary: Pure AI parsing function for testing transcript processing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [raw_transcript]
+              properties:
+                raw_transcript:
+                  type: string
+      responses:
+        '200':
+          description: Extracted result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AIParseResult'
+
+components:
+  schemas:
+    Subtask:
+      type: object
+      required: [id, text, done, order]
+      properties:
+        id:
+          type: string
+          format: uuid
+        text:
+          type: string
+        done:
+          type: boolean
+        order:
+          type: integer
+    Task:
+      type: object
+      required: [id, title, priority, status, urgency_score, raw_transcript, ai_confidence]
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        deadline:
+          type: string
+          format: date-time
+        priority:
+          type: string
+          enum: [LOW, MEDIUM, HIGH]
+        status:
+          type: string
+          enum: [TODO, IN_PROGRESS, DONE, ARCHIVED]
+        urgency_score:
+          type: number
+          format: float
+        raw_transcript:
+          type: string
+        ai_confidence:
+          type: number
+          format: float
+        subtasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Subtask'
+    AIParseResult:
+      type: object
+      properties:
+        task:
+          type: object
+          properties:
+            title:
+              type: string
+            deadline:
+              type: string
+              format: date-time
+            priority:
+              type: string
+              enum: [LOW, MEDIUM, HIGH]
+            subtasks:
+              type: array
+              items:
+                type: object
+                properties:
+                  text:
+                    type: string
+                  order:
+                    type: integer
+            notes:
+              type: string
+        confidence:
+          type: number
+          format: float
+        needs_confirmation:
+          type: boolean
+        suggested_deadline:
+          type: string
+          format: date-time
