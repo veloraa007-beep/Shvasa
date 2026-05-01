@@ -1,16 +1,20 @@
+import dotenv from 'dotenv';
+// Load environment variables immediately before any other imports
+dotenv.config();
+dotenv.config({ path: '.env.local', override: true });
+
 import express from 'express';
 import type { ErrorRequestHandler } from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import { tasksRouter } from './routes/tasks';
 import { tasksV3Router } from './routes/api/tasks';
 import { parseRouter } from './routes/api/parse';
-
-dotenv.config();
+import { prisma } from './db';
 
 const app = express();
 const port = process.env.PORT || 3001;
 
+// Middlewares
 app.use(cors());
 app.use(express.json());
 
@@ -19,9 +23,22 @@ app.use('/tasks', tasksRouter);
 app.use('/api/tasks', tasksV3Router);
 app.use('/api/parse', parseRouter);
 
-// Health check
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+// Health check with DB status
+app.get('/health', async (req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    res.json({ 
+      status: 'ok', 
+      database: 'connected',
+      timestamp: new Date().toISOString() 
+    });
+  } catch (err) {
+    res.status(503).json({ 
+      status: 'error', 
+      database: 'disconnected',
+      timestamp: new Date().toISOString() 
+    });
+  }
 });
 
 function getErrorPayload(err: unknown): { status: number; error: string; code?: string } {
@@ -45,7 +62,7 @@ function getErrorPayload(err: unknown): { status: number; error: string; code?: 
 const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
   const payload = getErrorPayload(err);
 
-  console.error(err instanceof Error ? err.stack : err);
+  console.error('[Shvasa Server Error]:', err instanceof Error ? err.stack : err);
   res.status(payload.status).json({
     error: payload.error,
     code: payload.code,
@@ -55,5 +72,8 @@ const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
 app.use(errorHandler);
 
 app.listen(port, () => {
-  console.log(`Shvasa Backend listening at http://localhost:${port}`);
+  console.log(`
+  🌿 Shvasa Backend is breathing...
+  📡 Listening at http://localhost:${port}
+  `);
 });
