@@ -81,6 +81,7 @@ tasksRouter.post('/', async (req, res, next) => {
         task_id: createdTask.id,
         raw_input: raw_transcript,
         parsed_output: parseResult,
+        model: 'openai/gpt-4o-mini',
         confidence: parseResult.confidence,
         ms_latency: parseResult._latency,
       },

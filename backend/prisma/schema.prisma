@@ -23,6 +23,7 @@ model User {
   created_at            DateTime  @default(now())
   tasks                 Task[]
   patterns              UserPattern?
+  device_tokens         DeviceToken[]
 }
 
 model Task {
@@ -174,8 +175,33 @@ model DailySnapshot {
   created_at   DateTime @default(now())
 }
 
-enum Priority     { HIGH MEDIUM LOW }
-enum TaskStatus   { SEED PLANT TREE }
-enum Visibility   { PERSONAL WORKSPACE }
-enum WorkspaceRole { OWNER ADMIN MEMBER VIEWER }
-enum Channel      { PUSH EMAIL SLACK WHATSAPP }
+enum Priority {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum TaskStatus {
+  SEED
+  PLANT
+  TREE
+}
+
+enum Visibility {
+  PERSONAL
+  WORKSPACE
+}
+
+enum WorkspaceRole {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
+enum Channel {
+  PUSH
+  EMAIL
+  SLACK
+  WHATSAPP
+}
