@@ -14,7 +14,7 @@ const CreateTaskFlowSchema = z.object({
 tasksRouter.post('/', async (req, res, next) => {
   try {
     const { raw_transcript } = CreateTaskFlowSchema.parse(req.body);
-    const user_id = (req as any).user?.id;
+    const user_id = req.user?.id;
     if (!user_id) return res.status(401).json({ error: 'Unauthorized: No user session found' });
     
     const parseResult = await parseVoiceInput(raw_transcript);
@@ -88,7 +88,7 @@ tasksRouter.post('/', async (req, res, next) => {
 
 tasksRouter.get('/', async (req, res, next) => {
   try {
-    const user_id = (req as any).user?.id;
+    const user_id = req.user?.id;
     if (!user_id) return res.status(401).json({ error: 'Unauthorized: No user session found' });
     const tasks = await prisma.task.findMany({
       where: { user_id },

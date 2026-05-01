@@ -2,15 +2,19 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { cleanupTranscription, extractTaskData, detectSchedulingConflicts } from '../services/ai_v3';
 import { prisma } from '../../db';
+import { authMiddleware } from '../../middleware/auth';
 
 export const parseRouter = Router();
+parseRouter.use(authMiddleware);
 
 parseRouter.post('/', async (req, res, next) => {
   try {
-    const { raw_transcript, user_id } = z.object({
+    const { raw_transcript } = z.object({
       raw_transcript: z.string(),
-      user_id: z.string().uuid().optional()
     }).parse(req.body);
+
+    const user_id = req.user?.id;
+    if (!user_id) return res.status(401).json({ error: 'Unauthorized' });
 
     const today = new Date().toISOString().split('T')[0];
     
