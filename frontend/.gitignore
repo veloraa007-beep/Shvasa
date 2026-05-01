@@ -1,7 +1,0 @@
-.env*
-!.env.example
-.next
-node_modules
-out
-npm-debug.log*
-server.*.log
