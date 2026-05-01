@@ -8,7 +8,8 @@ tasksV3Router.use(authMiddleware);
 
 tasksV3Router.get('/', async (req, res, next) => {
   try {
-    const user_id = (req as any).user?.id || req.headers['x-user-id'];
+    const user_id = (req as any).user?.id;
+    if (!user_id) return res.status(401).json({ error: 'User ID not found in session' });
     const tasks = await prisma.task.findMany({
       where: { user_id },
       orderBy: { urgency_score: 'desc' },
@@ -22,7 +23,8 @@ tasksV3Router.get('/', async (req, res, next) => {
 
 tasksV3Router.post('/', async (req, res, next) => {
     try {
-        const user_id = (req as any).user?.id || req.body.user_id;
+        const user_id = (req as any).user?.id;
+        if (!user_id) return res.status(401).json({ error: 'User ID not found in session' });
         const { title, deadline, priority, subtasks, raw_transcript, ai_confidence } = req.body;
 
         const task = await prisma.task.create({

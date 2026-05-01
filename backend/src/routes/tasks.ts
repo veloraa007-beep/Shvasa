@@ -2,18 +2,20 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { prisma } from '../db';
 import { calculateUrgency } from '../utils/urgency';
-import { parseVoiceInput } from '../services/ai';
+import { authMiddleware } from '../middleware/auth';
 
 export const tasksRouter = Router();
+tasksRouter.use(authMiddleware);
 
 const CreateTaskFlowSchema = z.object({
   raw_transcript: z.string().min(1),
-  user_id: z.string().uuid(),
 });
 
 tasksRouter.post('/', async (req, res, next) => {
   try {
-    const { raw_transcript, user_id } = CreateTaskFlowSchema.parse(req.body);
+    const { raw_transcript } = CreateTaskFlowSchema.parse(req.body);
+    const user_id = (req as any).user?.id;
+    if (!user_id) return res.status(401).json({ error: 'Unauthorized: No user session found' });
     
     const parseResult = await parseVoiceInput(raw_transcript);
     
@@ -86,7 +88,8 @@ tasksRouter.post('/', async (req, res, next) => {
 
 tasksRouter.get('/', async (req, res, next) => {
   try {
-    const user_id = req.headers['x-user-id'] as string;
+    const user_id = (req as any).user?.id;
+    if (!user_id) return res.status(401).json({ error: 'Unauthorized: No user session found' });
     const tasks = await prisma.task.findMany({
       where: { user_id },
       orderBy: { urgency_score: 'desc' },
@@ -100,10 +103,16 @@ tasksRouter.get('/', async (req, res, next) => {
 
 tasksRouter.get('/:id', async (req, res, next) => {
   try {
-    const task = await prisma.task.findUniqueOrThrow({
-      where: { id: req.params.id },
+    const user_id = (req as any).user?.id;
+    const task = await prisma.task.findUnique({
+      where: { 
+        id: req.params.id,
+        user_id // Ensure the task belongs to the user
+      },
       include: { subtasks: true },
     });
+    
+    if (!task) return res.status(404).json({ error: 'Task not found' });
     res.json(task);
   } catch (err) {
     next(err);
