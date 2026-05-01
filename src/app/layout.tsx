@@ -1,10 +1,9 @@
 import type { Metadata } from 'next';
 import { DM_Serif_Display, DM_Sans, Space_Mono } from 'next/font/google';
 import { AppProviders } from '@/components/shvasa/AppProviders';
-import { validateServerEnv } from '@/lib/env/server';
 import './globals.css';
 
-validateServerEnv();
+// Environment validation is handled lazily in routes
 
 const dmSerifDisplay = DM_Serif_Display({
   weight: '400',
