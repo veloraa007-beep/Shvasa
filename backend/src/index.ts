@@ -1,4 +1,5 @@
 import express from 'express';
+import type { ErrorRequestHandler } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { tasksRouter } from './routes/tasks';
@@ -23,14 +24,35 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+function getErrorPayload(err: unknown): { status: number; error: string; code?: string } {
+  if (err instanceof Error) {
+    const maybeError = err as Error & { status?: number; code?: string };
+
+    return {
+      status: maybeError.status ?? 500,
+      error: maybeError.message || 'Internal Server Error',
+      code: maybeError.code,
+    };
+  }
+
+  return {
+    status: 500,
+    error: 'Internal Server Error',
+  };
+}
+
 // Error handling middleware
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error(err.stack);
-  res.status(err.status || 500).json({
-    error: err.message || 'Internal Server Error',
-    code: err.code
+const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
+  const payload = getErrorPayload(err);
+
+  console.error(err instanceof Error ? err.stack : err);
+  res.status(payload.status).json({
+    error: payload.error,
+    code: payload.code,
   });
-});
+};
+
+app.use(errorHandler);
 
 app.listen(port, () => {
   console.log(`Shvasa Backend listening at http://localhost:${port}`);

@@ -9,9 +9,10 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
   }
 
   const token = authHeader.split(' ')[1];
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SERVICE_ROLE_KEY;
   
   // 1. Check for Service Role bypass (for internal scripts/Inngest)
-  if (process.env.SERVICE_ROLE_KEY && token === process.env.SERVICE_ROLE_KEY) {
+  if (serviceRoleKey && token === serviceRoleKey) {
     return next();
   }
 

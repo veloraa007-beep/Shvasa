@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { cleanupTranscription, extractTaskData, detectSchedulingConflicts } from '../services/ai_v3';
+import { cleanupTranscription, extractTaskData, detectSchedulingConflicts } from '../../services/ai_v3';
 import { prisma } from '../../db';
 import { authMiddleware } from '../../middleware/auth';
 

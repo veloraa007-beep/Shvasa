@@ -4,13 +4,17 @@
     "module": "CommonJS",
     "lib": ["ES2020"],
     "outDir": "./dist",
-    "rootDir": "./src",
+    "rootDir": "../",
+    "baseUrl": ".",
+    "paths": {
+      "zod": ["node_modules/zod"]
+    },
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "moduleResolution": "node"
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "../shared/schemas/**/*"],
   "exclude": ["node_modules", "dist"]
 }

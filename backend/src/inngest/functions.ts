@@ -5,7 +5,7 @@ export const inngest = new Inngest({ id: "taskly-v3" });
 
 // 1. Urgency score recalculation — every 15 min
 export const recalculateUrgency = inngest.createFunction(
-  { name: "recalculate-urgency" },
+  { id: "recalculate-urgency", name: "recalculate-urgency" },
   { cron: "*/15 * * * *" },
   async ({ step }) => {
     // Logic to fetch all non-TREE tasks and update urgency_score
@@ -16,7 +16,7 @@ export const recalculateUrgency = inngest.createFunction(
 
 // 2. Daily brief generation
 export const generateDailyBrief = inngest.createFunction(
-  { name: "generate-daily-brief" },
+  { id: "generate-daily-brief", name: "generate-daily-brief" },
   { event: "taskly/brief.scheduled" },
   async ({ event, step }) => {
     // Logic to call GPT-4o with Prompt 5 and send via Resend
@@ -27,7 +27,7 @@ export const generateDailyBrief = inngest.createFunction(
 
 // 3. Reminder dispatch
 export const dispatchReminder = inngest.createFunction(
-  { name: "dispatch-reminder" },
+  { id: "dispatch-reminder", name: "dispatch-reminder" },
   { event: "taskly/reminder.fire" },
   async ({ event, step }) => {
     // Route to correct channel (PUSH | EMAIL | SLACK | WHATSAPP)

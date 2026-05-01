@@ -3,9 +3,15 @@ import { z } from 'zod';
 import { prisma } from '../db';
 import { calculateUrgency } from '../utils/urgency';
 import { authMiddleware } from '../middleware/auth';
+import { parseVoiceInput } from '../services/ai';
 
 export const tasksRouter = Router();
 tasksRouter.use(authMiddleware);
+
+type ParsedSubtask = {
+  text: string;
+  order: number;
+};
 
 const CreateTaskFlowSchema = z.object({
   raw_transcript: z.string().min(1),
@@ -62,7 +68,7 @@ tasksRouter.post('/', async (req, res, next) => {
         ai_confidence: parseResult.confidence,
         urgency_score: calculateUrgency(parseResult.task.deadline ? new Date(parseResult.task.deadline) : null, parseResult.task.priority || 'MEDIUM', parseResult.task.subtasks?.length || 0),
         subtasks: {
-          create: parseResult.task.subtasks?.map(st => ({
+          create: parseResult.task.subtasks?.map((st: ParsedSubtask) => ({
             text: st.text,
             order: st.order,
           })) || [],
@@ -74,9 +80,9 @@ tasksRouter.post('/', async (req, res, next) => {
       data: {
         task_id: createdTask.id,
         raw_input: raw_transcript,
-        parsed_output: parseResult as any,
+        parsed_output: parseResult,
         confidence: parseResult.confidence,
-        ms_latency: (parseResult as any)._latency || 0,
+        ms_latency: parseResult._latency,
       },
     });
     
@@ -103,7 +109,8 @@ tasksRouter.get('/', async (req, res, next) => {
 
 tasksRouter.get('/:id', async (req, res, next) => {
   try {
-    const user_id = (req as any).user?.id;
+    const user_id = req.user?.id;
+    if (!user_id) return res.status(401).json({ error: 'Unauthorized: No user session found' });
     const task = await prisma.task.findUnique({
       where: { 
         id: req.params.id,
